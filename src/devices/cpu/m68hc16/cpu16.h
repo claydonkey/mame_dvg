@@ -122,7 +122,7 @@ private:
 };
 
 // device type declaration
-DECLARE_DEVICE_TYPE(MC68HC16Z1, mc68hc16z1_device)
+DECLARE_DEVICE_TYPE(CPU16_DEVICE, cpu16_device)
 
 
 #endif // MAME_CPU_M68HC16_CPU16_H

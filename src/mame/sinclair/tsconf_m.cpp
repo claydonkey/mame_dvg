@@ -708,7 +708,7 @@ void tsconf_state::tsconf_port_77_zctr_w(offs_t port, u8 data)
 
 u8 tsconf_state::tsconf_port_77_zctr_r(offs_t port)
 {
-	return 0x02 | !m_sdcard->get_card_present();
+	return 0x02 | ((u8)!m_sdcard->get_card_present());
 }
 
 void tsconf_state::tsconf_port_57_zctr_w(offs_t port, u8 data)

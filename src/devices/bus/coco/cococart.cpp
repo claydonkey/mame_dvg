@@ -581,7 +581,8 @@ image_init_result cococart_slot_device::call_load()
 	{
 		memory_region *cart_mem = m_cart->get_cart_memregion();
 		u8 *base = cart_mem->base();
-		offs_t read_length, cart_length = cart_mem->bytes();
+		offs_t read_length = 0;
+		offs_t cart_length = cart_mem->bytes();
 
 		if (loaded_through_softlist())
 		{

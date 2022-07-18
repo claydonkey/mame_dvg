@@ -3,7 +3,7 @@
 #ifndef VECTOR_V_ST_H
 #define VECTOR_V_ST_H
 #pragma once
-#define  TERMIOS
+#undef  TERMIOS
 #include "osdcore.h"
 #include "screen.h"
 #include "divector.h"
@@ -64,7 +64,7 @@ public:
     virtual uint32_t screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect) override;
 private:
 #ifdef TERMIOS
-	const char* m_serial;
+	
 	int serial_open(const char* const dev);
 	int m_serial_fd;
 #else

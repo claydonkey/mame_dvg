@@ -19,7 +19,7 @@ local extlibs = {
 	glm        = { "glm",       "3rdparty/glm" },
 	rapidjson  = { "rapidjson", "3rdparty/rapidjson/include" },
 	pugixml    = { "pugixml",   "3rdparty/pugixml/src" },
-	termiWin   = { "termiWin",  "3rdparty/termiWin/src" },
+	termiWin   = { "termiWin",  "3rdparty/termiWin/include" },
 }
 
 -- system lib options

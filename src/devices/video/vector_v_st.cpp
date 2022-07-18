@@ -18,9 +18,9 @@
 #include <unistd.h>
 #endif
 #define VERBOSE 0
-#define MAX_POINTS 20000
+#define MAX_POINTS 30000
 #define VECTOR_SERIAL_MAX 4095
-#define CHUNK_SIZE 64
+#define CHUNK_SIZE 512
 #include "logmacro.h"
 
 DEFINE_DEVICE_TYPE(VECTOR_V_ST, vector_device_v_st, "vector_v_st", "VECTOR_V_ST")
@@ -301,7 +301,7 @@ void vector_device_v_st::device_start()
 	m_serial_sort = 1;
 	m_serial_buf = make_unique_clear<unsigned char[]>((MAX_POINTS + 2) * 4);
 
-	auto filerr = osd_file::open(vector_device_v_st_options::s_vector_port,   OPEN_FLAG_WRITE, m_serial, size);
+	std::error_condition filerr = osd_file::open(vector_device_v_st_options::s_vector_port,   OPEN_FLAG_WRITE, m_serial, size);
 	if (filerr)
 	{
 		fprintf(stderr, "vector_device_vectrx2020: error: osd_file::open failed: %s on port %s\n", const_cast<char*>(filerr.message().c_str()), vector_device_v_st_options::s_vector_port);
