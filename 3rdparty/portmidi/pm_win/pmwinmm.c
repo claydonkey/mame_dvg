@@ -1303,7 +1303,7 @@ static PmTimestamp winmm_synchronize(PmInternal *midi)
     midiwinmm_type m;
     unsigned long pm_stream_time_2;
     unsigned long real_time;
-    unsigned long pm_stream_time;
+    unsigned long pm_stream_time =0UL;
 
     /* only synchronize if we are using stream interface */
     if (midi->latency == 0) return 0;

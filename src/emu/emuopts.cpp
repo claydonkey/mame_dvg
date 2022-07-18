@@ -134,6 +134,16 @@ const options_entry emu_options::s_option_entries[] =
 	{ OPTION_BEAM_DOT_SIZE,                              "1.0",       core_options::option_type::FLOAT,      "set vector beam size for dots" },
 	{ OPTION_BEAM_INTENSITY_WEIGHT,                      "0",         core_options::option_type::FLOAT,      "set vector beam intensity weight " },
 	{ OPTION_FLICKER,                                    "0",         core_options::option_type::FLOAT,      "set vector flicker effect" },
+	{ OPTION_VECTOR_DRIVER,                              "screen",    core_options::option_type::STRING,     "set vector driver (screen, usb_dvg, v_st)" },
+	{ OPTION_VECTOR_PORT,                              "\\\\.\\COM4",  core_options::option_type::STRING,    "set vector serial port"},
+	{ OPTION_VECTOR_SCREEN_MIRROR,                       "0",        core_options::option_type::BOOLEAN,    "enable screen mirror"},
+	{ OPTION_VECTOR_SCALE "(0.1-2.0)",                   "1.0",       core_options::option_type::FLOAT,      "set vector serial output scale" },
+	{ OPTION_VECTOR_SCALE_X "(0.1-2.0)",                 "1.0",       core_options::option_type::FLOAT,      "set vector x axis serial output scale" },
+	{ OPTION_VECTOR_SCALE_Y "(0.1-2.0)",                 "1.0",       core_options::option_type::FLOAT,      "set vector y axis serial output scale" },
+	{ OPTION_VECTOR_OFFSET_X "(0.00-2048)",              "2048",      core_options::option_type::FLOAT,     "set vector x axis serial offset (1024)" },
+	{ OPTION_VECTOR_OFFSET_Y "(0.00-2048)",              "2048",      core_options::option_type::FLOAT,     "set vector y axis serial offset (1024)" },
+	{ OPTION_VECTOR_ROTATE,                              "0",         core_options::option_type::INTEGER,    "set vector serial rotation (0,1,2,3)" },
+	{ OPTION_VECTOR_BRIGHT "(0-255)",                    "255",       core_options::option_type::INTEGER,    "set vector threshold for bright lines (0-255)" },
 
 	// sound options
 	{ nullptr,                                           nullptr,     core_options::option_type::HEADER,     "CORE SOUND OPTIONS" },

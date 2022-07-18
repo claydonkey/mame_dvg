@@ -42,12 +42,12 @@
  **************************************************************************** */
 
 #include "emu.h"
+#include "video/vector.h"
+#include "divector.h"
 #include "vector.h"
-
 #include "emuopts.h"
 #include "render.h"
 #include "screen.h"
-
 
 #define VECTOR_WIDTH_DENOM 512
 
@@ -59,27 +59,46 @@ float vector_options::s_beam_width_min = 0.0f;
 float vector_options::s_beam_width_max = 0.0f;
 float vector_options::s_beam_dot_size = 0.0f;
 float vector_options::s_beam_intensity_weight = 0.0f;
+bool  vector_options::s_mirror = false;
 
-void vector_options::init(emu_options& options)
+void vector_options::init(emu_options &options)
 {
 	s_beam_width_min = options.beam_width_min();
 	s_beam_width_max = options.beam_width_max();
 	s_beam_dot_size = options.beam_dot_size();
 	s_beam_intensity_weight = options.beam_intensity_weight();
 	s_flicker = options.flicker();
+	s_mirror = options.vector_screen_mirror();
 }
 
 // device type definition
 DEFINE_DEVICE_TYPE(VECTOR, vector_device, "vector_device", "VECTOR")
 
-vector_device::vector_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, VECTOR, tag, owner, clock),
-		device_video_interface(mconfig, *this),
-		m_vector_list(nullptr),
-		m_min_intensity(255),
-		m_max_intensity(0)
+
+
+vector_device::vector_device(const machine_config& mconfig, const char* tag, device_t* owner, uint32_t clock)
+	: vector_interface(mconfig, VECTOR, tag, owner, clock),
+	  now(false),
+	  m_v_st_device(*this, "vector_device_v_st"),
+	  m_usb_dvg_device(*this, "vector_usb_dvg"),
+	  m_vector_list(nullptr),
+	  m_min_intensity(255),
+	  m_max_intensity(0)
 {
 }
+void vector_device::device_add_mconfig(machine_config &config)
+{
+    if (!strcmp(config.options().vector_driver(), "usb_dvg"))
+	{
+		VECTOR_USB_DVG(config, "vector_usb_dvg");
+	}
+	else if (!strcmp(config.options().vector_driver(), "v_st"))
+	{
+		VECTOR_V_ST(config, "vector_device_v_st");
+	}
+}
+void vector_device::add_line(float xf0, float yf0, float xf1, float yf1, int intensity) {};
+ 
 
 void vector_device::device_start()
 {
@@ -91,6 +110,10 @@ void vector_device::device_start()
 	m_vector_list = std::make_unique<point[]>(MAX_POINTS);
 }
 
+void vector_device::device_stop(){}
+
+void vector_device::device_reset(){}
+
 /*
  * www.dinodini.wordpress.com/2010/04/05/normalized-tunable-sigmoid-functions/
  */
@@ -100,13 +123,22 @@ float vector_device::normalized_sigmoid(float n, float k)
 	return (n - n * k) / (k - fabs(n) * 2.0f * k + 1.0f);
 }
 
-
 /*
  * Adds a line end point to the vertices list. The vector processor emulation
  * needs to call this.
  */
 void vector_device::add_point(int x, int y, rgb_t color, int intensity)
 {
+
+	if (m_usb_dvg_device.found())
+	{
+		m_usb_dvg_device->add_point(x, y, color, intensity);
+		if (!vector_options::s_mirror)
+			return;
+	}
+
+	
+
 	point *newpoint;
 
 	intensity = std::clamp(intensity, 0, 255);
@@ -135,8 +167,12 @@ void vector_device::add_point(int x, int y, rgb_t color, int intensity)
 		m_vector_index--;
 		logerror("*** Warning! Vector list overflow!\n");
 	}
-}
+	if (m_v_st_device.found() && (color | 0xff0000) != 0xff0000)
+	{
+		m_v_st_device->add_point(x, y, color, intensity);
 
+	}
+}
 
 /*
  * The vector CPU creates a new display list. We save the old display list,
@@ -147,9 +183,30 @@ void vector_device::clear_list(void)
 	m_vector_index = 0;
 }
 
-
 uint32_t vector_device::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
 {
+
+	if (m_usb_dvg_device.found())
+	{
+		m_usb_dvg_device->screen_update(screen, bitmap, cliprect);
+
+		if (m_vector_index == 0)
+		{
+			return 0;
+		}
+	}
+
+	if (m_v_st_device.found())
+	{
+		
+		m_v_st_device->screen_update(screen, bitmap, cliprect);
+		if (m_vector_index == 0)
+		{
+			return 0;
+		}
+
+	}
+
 	uint32_t flags = PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(BLENDMODE_ADD) | PRIMFLAG_VECTOR(1);
 	const rectangle &visarea = screen.visible_area();
 	float xscale = 1.0f / (65536 * visarea.width());
@@ -164,7 +221,7 @@ uint32_t vector_device::screen_update(screen_device &screen, bitmap_rgb32 &bitma
 	curpoint = m_vector_list.get();
 
 	screen.container().empty();
-	screen.container().add_rect(0.0f, 0.0f, 1.0f, 1.0f, rgb_t(0xff,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_VECTORBUF(1));
+	screen.container().add_rect(0.0f, 0.0f, 1.0f, 1.0f, rgb_t(0xff, 0x00, 0x00, 0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_VECTORBUF(1));
 
 	for (int i = 0; i < m_vector_index; i++)
 	{
@@ -175,8 +232,8 @@ uint32_t vector_device::screen_update(screen_device &screen, bitmap_rgb32 &bitma
 
 		// check for static intensity
 		float beam_width = m_min_intensity == m_max_intensity
-			? vector_options::s_beam_width_min
-			: vector_options::s_beam_width_min + intensity_weight * (vector_options::s_beam_width_max - vector_options::s_beam_width_min);
+							   ? vector_options::s_beam_width_min
+							   : vector_options::s_beam_width_min + intensity_weight * (vector_options::s_beam_width_max - vector_options::s_beam_width_min);
 
 		// normalize width
 		beam_width *= 1.0f / (float)VECTOR_WIDTH_DENOM;
@@ -197,8 +254,21 @@ uint32_t vector_device::screen_update(screen_device &screen, bitmap_rgb32 &bitma
 				beam_width,
 				(curpoint->intensity << 24) | (curpoint->col & 0xffffff),
 				flags);
-		}
 
+			//Screen Update for Derived Class
+
+			if (m_v_st_device.found())
+			{
+				if (m_vector_index == 0 && (curpoint->col | 0xff0000) != 0xff0000)
+				{
+					return 0;
+				}
+				m_v_st_device->add_line(coords.x0, coords.y0, coords.x1, coords.y1, curpoint->intensity);
+			
+			}
+			add_line(coords.x0, coords.y0, coords.x1, coords.y1, curpoint->intensity);
+		}
+		now = !now;
 		lastx = curpoint->x;
 		lasty = curpoint->y;
 

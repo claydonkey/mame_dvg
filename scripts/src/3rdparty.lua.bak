@@ -1031,10 +1031,10 @@ project "termiWin"
 			"/wd4244", -- warning C4244: 'argument' : conversion from 'xxx' to 'xxx', possible loss of data
 			"/wd4456", -- warning C4456: declaration of 'xxx' hides previous local declaration
 			"/wd4706", -- warning C4706: assignment within conditional expression
-			"/wd4996", -- warning C4996: class member, variable, or typedef that's marked deprecated
-			"/wd4057", -- warning C4057: 'operator' : 'identifier1' indirection to slightly different base types from 'identifier2'
-			"/wd4067", -- warning C4067: unexpected tokens following preprocessor directive - expected a newline
-			"/wd4189", -- warning C4189: 'identifier' : local variable is initialized but not referenced
+			"/wd4996", -- warning C4996: assignment within conditional expression
+			"/wd4057", -- warning C4057: assignment within conditional expression
+			"/wd4067", -- warning C4067: assignment within conditional expression
+			"/wd4189", -- warning C4189: assignment within conditional expression
 		}
 if _OPTIONS["vs"]=="intel-15" then
 		buildoptions {
